@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
-use crate::repository::PaymentAddressRepository;
-use anyhow::{bail, Result};
-use async_trait::async_trait;
-use lnurl::{lnurl::LnUrl, pay::PayResponse, LnUrlResponse};
-use rand::distr::SampleString;
 use super::{ILnaddrService, LnaddrService, RegisterResponse};
+use crate::repository::PaymentAddressRepository;
+use anyhow::{Result, bail};
+use async_trait::async_trait;
+use lnurl::{LnUrlResponse, lnurl::LnUrl, pay::PayResponse};
+use rand::distr::SampleString;
 
 pub struct DirectLnaddrService {
     repo: PaymentAddressRepository,
@@ -15,7 +15,11 @@ pub struct DirectLnaddrService {
 
 impl DirectLnaddrService {
     pub fn new(repo: PaymentAddressRepository, domains: Vec<String>) -> Self {
-        Self { repo, domains, client: lnurl::AsyncClient::from_client(reqwest::Client::new()) }
+        Self {
+            repo,
+            domains,
+            client: lnurl::AsyncClient::from_client(reqwest::Client::new()),
+        }
     }
 
     pub fn into_dyn(self) -> LnaddrService {
@@ -29,7 +33,11 @@ impl ILnaddrService for DirectLnaddrService {
         Ok(self.domains.clone())
     }
 
-    async fn get_lnaddr_manifest(&self, domain: &str, username: &str) -> Result<Option<PayResponse>> {
+    async fn get_lnaddr_manifest(
+        &self,
+        domain: &str,
+        username: &str,
+    ) -> Result<Option<PayResponse>> {
         let Some(lnaddr_entry) = self.repo.get_payment_address(domain, username).await? else {
             return Ok(None);
         };
@@ -51,16 +59,26 @@ impl ILnaddrService for DirectLnaddrService {
         Ok(Some(lnaddr_entry.lnurl))
     }
 
-    async fn register_lnaddr(&self, domain: &str, username: &str, lnurl: &str) -> Result<RegisterResponse> {
+    async fn register_lnaddr(
+        &self,
+        domain: &str,
+        username: &str,
+        lnurl: &str,
+    ) -> Result<RegisterResponse> {
         if !self.domains.contains(&domain.to_string()) {
             bail!("Unsupported domain: {}", domain);
         }
 
+        // Test if the lnurl is valid
+        LnUrl::decode(lnurl.to_owned())?;
+
         let authentication_token = rand::distr::Alphanumeric.sample_string(&mut rand::rng(), 20);
-        self.repo.add_payment_address(domain, username, lnurl, &authentication_token).await?;
+        self.repo
+            .add_payment_address(domain, username, lnurl, &authentication_token)
+            .await?;
 
         Ok(RegisterResponse {
-            lnaddr: format!("{}@{}", username,domain),
+            lnaddr: format!("{}@{}", username, domain),
             authentication_token,
         })
     }

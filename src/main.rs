@@ -1,6 +1,6 @@
-use clap::Parser;
-use lnaddrd::{api::serve, config::Config};
 use anyhow::Result;
+use clap::Parser;
+use lnaddrd::{config::Config, serve};
 
 #[tokio::main]
 async fn main() -> Result<()> {
