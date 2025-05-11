@@ -36,6 +36,77 @@
             export RUST_BACKTRACE=1
           '';
         };
+
+        packages.default = pkgs.rustPlatform.buildRustPackage {
+          pname = "lnaddrd";
+          version = "0.1.0";
+          src = ./.;
+          nativeBuildInputs = [ pkgs.pkg-config ];
+          buildInputs = [ pkgs.libpq ];
+          cargoLock = {
+            lockFile = ./Cargo.lock;
+          };
+        };
+
+        nixosModules.lnaddrd = { config, lib, pkgs, system, ... }: with lib; {
+          options.services.lnaddrd = {
+            enable = mkOption {
+              type = types.bool;
+              default = false;
+              description = "Whether to enable the lnaddrd service.";
+            };
+            domains = mkOption {
+              type = with types; listOf str;
+              default = [];
+              description = ''
+                One or more domain names to serve. Specify multiple times for multiple domains.
+              '';
+            };
+            bind = mkOption {
+              type = types.str;
+              default = "127.0.0.1:8080";
+              description = "The address to bind the server to.";
+            };
+            database = mkOption {
+              type = types.str;
+              default = "postgres://localhost:5432/lnaddrd";
+              description = "The database URL.";
+            };
+            package = mkOption {
+              type = types.nullOr types.package;
+              default = self.packages.${system}.default;
+              description = "The package to use for the lnaddrd service. Defaults to the flake's default package if available.";
+            };
+          };
+
+          config = mkIf config.services.lnaddrd.enable {
+            users.groups.lnaddrd = {};
+            users.users.lnaddrd = {
+              isSystemUser = true;
+              group = "lnaddrd";
+              home = "/var/empty";
+              shell = "/run/current-system/sw/bin/nologin";
+              description = "User for lnaddrd service";
+            };
+
+            systemd.services.lnaddrd = {
+              description = "lnaddrd Lightning Address Service";
+              after = [ "network.target" "postgresql.service" ];
+              wantedBy = [ "multi-user.target" ];
+              environment = {
+                LNADDRD_DOMAINS = concatStringsSep "," config.services.lnaddrd.domains;
+                LNADDRD_BIND = config.services.lnaddrd.bind;
+                LNADDRD_DATABASE_URL = config.services.lnaddrd.database;
+              };
+              serviceConfig = {
+                ExecStart = "${config.services.lnaddrd.package}/bin/lnaddrd";
+                Restart = "on-failure";
+                User = "lnaddrd";
+                Group = "lnaddrd";
+              };
+            };
+          };
+        };
       }
     );
 }

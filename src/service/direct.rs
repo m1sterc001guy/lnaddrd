@@ -5,7 +5,7 @@ use crate::repository::PaymentAddressRepository;
 use anyhow::{Result, bail};
 use async_trait::async_trait;
 use lnurl::{LnUrlResponse, lnurl::LnUrl, pay::PayResponse};
-use rand::distr::SampleString;
+use rand::distributions::DistString;
 
 pub struct DirectLnaddrService {
     repo: PaymentAddressRepository,
@@ -72,7 +72,7 @@ impl ILnaddrService for DirectLnaddrService {
         // Test if the lnurl is valid
         LnUrl::decode(lnurl.to_owned())?;
 
-        let authentication_token = rand::distr::Alphanumeric.sample_string(&mut rand::rng(), 20);
+        let authentication_token = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 20);
         self.repo
             .add_payment_address(domain, username, lnurl, &authentication_token)
             .await?;
