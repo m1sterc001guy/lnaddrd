@@ -29,19 +29,22 @@ db-status:
 
 # Create the development database
 db-create:
-    createdb -h localhost lnaddrd_dev
+    createdb -h localhost lnaddrd
 
 # Drop the development database
 db-drop:
-    dropdb -h localhost lnaddrd_dev
+    dropdb -h localhost lnaddrd
 
 # Reset the development database (drop and recreate)
 db-reset: db-drop db-create
 
 # Connect to the development database
 db-connect:
-    psql -h localhost lnaddrd_dev
+    psql -h localhost lnaddrd
 
 # Format the code
 format:
     cargo fmt --all
+
+clippy:
+    cargo clippy --all --all-targets -- -D warnings
