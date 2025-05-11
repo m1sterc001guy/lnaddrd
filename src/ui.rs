@@ -18,32 +18,48 @@ pub struct RegisterForm {
     lnurl: String,
 }
 
+// Add a helper function for the common <head> markup
+fn common_head(title: &str) -> Markup {
+    html! {
+        head {
+            meta charset="UTF-8";
+            meta name="viewport" content="width=device-width, initial-scale=1.0";
+            title { (title) }
+            link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flowbite@1.7.0/dist/flowbite.min.css";
+            script src="https://cdn.tailwindcss.com" {}
+            script src="https://cdn.jsdelivr.net/npm/flowbite@1.7.0/dist/flowbite.min.js" {}
+        }
+    }
+}
+
 pub async fn register_form(State(service): State<LnaddrService>) -> impl IntoResponse {
     let domains = service.list_domains().await.unwrap_or_default();
     let markup = html! {
         (DOCTYPE)
         html lang="en" {
-            head {
-                meta charset="UTF-8";
-                meta name="viewport" content="width=device-width, initial-scale=1.0";
-                title { "Register LN Address" }
-            }
-            body {
-                h1 { "Register LN Address" }
-                form id="register-form" method="post" action="/ui/register"  {
-                    label { "Domain: "
-                        select name="domain" required {
-                            @for domain in &domains {
-                                option value=(domain) { (domain) }
+            (common_head("Register LN Address"))
+            body class="bg-gray-50 min-h-screen flex items-center justify-center" {
+                div class="w-full max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg" {
+                    h1 class="text-3xl font-bold mb-6 text-center text-gray-900" { "Register LN Address" }
+                    form id="register-form" method="post" action="/ui/register" class="space-y-6"  {
+                        div {
+                            label for="domain" class="block mb-2 text-sm font-medium text-gray-900" { "Domain" }
+                            select name="domain" id="domain" required class="block w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500" {
+                                @for domain in &domains {
+                                    option value=(domain) { (domain) }
+                                }
                             }
                         }
+                        div {
+                            label for="username" class="block mb-2 text-sm font-medium text-gray-900" { "Username" }
+                            input name="username" id="username" required class="block w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500" {}
+                        }
+                        div {
+                            label for="lnurl" class="block mb-2 text-sm font-medium text-gray-900" { "LNURL" }
+                            textarea name="lnurl" id="lnurl" required rows="3" class="block w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500 resize-y" style="word-break: break-all;" {}
+                        }
+                        button type="submit" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center" { "Register" }
                     }
-                    br;
-                    label { "Username: " input name="username" required; }
-                    br;
-                    label { "LNURL: " input name="lnurl" required; }
-                    br;
-                    button type="submit" { "Register" }
                 }
             }
         }
@@ -70,7 +86,19 @@ pub async fn register_form_submit(
         }
         Err(e) => {
             let markup: Markup = html! {
-                div style="color:red" { "Error: " (e.to_string()) }
+                (DOCTYPE)
+                html lang="en" {
+                    (common_head("Error"))
+                    body class="bg-gray-50 min-h-screen flex items-center justify-center" {
+                        div class="w-full max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg" {
+                            h1 class="text-2xl font-bold mb-4 text-center text-red-700" { "Error" }
+                            div class="mb-6 text-center text-red-600 font-mono break-all" { (e.to_string()) }
+                            div class="text-center" {
+                                a href="/" class="inline-block text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center" { "Back to Register" }
+                            }
+                        }
+                    }
+                }
             };
             Html(markup.into_string()).into_response()
         }
@@ -105,19 +133,22 @@ pub async fn lnaddress_details(
     let markup = html! {
         (DOCTYPE)
         html lang="en" {
-            head {
-                meta charset="UTF-8";
-                meta name="viewport" content="width=device-width, initial-scale=1.0";
-                title { "LN Address Details" }
-            }
-            body {
-                h1 { "LN Address Details" }
-                p { b { "Lightning Address:" } " " (lnaddr) }
-                div { (maud::PreEscaped(lnaddr_svg)) }
-                p { b { "LNURL:" } " " (lnurl) }
-                p { b { "LNURL Decoded:" } " " (lnurl.url) }
-                p { b { "LNURL Manifest:" } " "  pre { (manifest_str) } }
-                p { a href="/" { "Back to Register" } }
+            (common_head("LN Address Details"))
+            body class="bg-gray-50 min-h-screen flex items-center justify-center" {
+                div class="w-full max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg" {
+                    h1 class="text-3xl font-bold mb-6 text-center text-gray-900" { "LN Address Details" }
+                    div class="mb-4" {
+                        p class="mb-2" { b { "Lightning Address:" } " " (lnaddr) }
+                        div class="flex justify-center mb-2" { (maud::PreEscaped(lnaddr_svg)) }
+                        p class="mb-2" { b { "LNURL:" } " " span class="break-all font-mono" { (lnurl) } }
+                        p class="mb-2" { b { "LNURL Decoded:" } " " span class="break-all font-mono" { (lnurl.url) } }
+                        p class="mb-2" { b { "LNURL Manifest:" } }
+                        pre class="bg-gray-100 rounded p-2 text-xs overflow-x-auto" { (manifest_str) }
+                    }
+                    div class="text-center" {
+                        a href="/" class="inline-block text-blue-600 hover:underline font-medium text-lg" { "Back to Register" }
+                    }
+                }
             }
         }
     };
