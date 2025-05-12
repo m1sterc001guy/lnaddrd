@@ -1,0 +1,27 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: lnaddrd
+      POSTGRES_USER: lnaddrd
+      POSTGRES_PASSWORD: lnaddrd
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  lnaddrd:
+    image: ghcr.io/elsirion/lnaddrd:latest
+    depends_on:
+      - db
+    environment:
+      LNADDRD_DOMAINS: "localhost"
+      LNADDRD_BIND: "0.0.0.0:8080"
+      LNADDRD_DATABASE_URL: "postgres://lnaddrd:lnaddrd@db:5432/lnaddrd"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  db-data:
