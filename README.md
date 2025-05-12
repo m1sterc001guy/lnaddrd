@@ -54,6 +54,37 @@ Options:
   -h, --help                  Print help
 ```
 
+### 3. Running with Docker
+
+You can run `lnaddrd` using Docker. First, build the image (or pull from your registry if available):
+
+```sh
+docker build -t lnaddrd .
+```
+
+Or pull from GitHub Container Registry (if published):
+
+```sh
+docker pull ghcr.io/<your-username-or-org>/lnaddrd:latest
+```
+
+Then run the container, passing the required environment variables:
+
+```sh
+docker run -p 8080:8080 \
+  -e LNADDRD_DOMAINS="yourdomain.com" \
+  -e LNADDRD_BIND="0.0.0.0:8080" \
+  -e LNADDRD_DATABASE_URL="postgres://user:password@host:5432/lnaddrd" \
+  ghcr.io/<your-username-or-org>/lnaddrd:latest
+```
+
+- `LNADDRD_DOMAINS`: Comma-separated list of domains to serve (e.g., `lnaddr.org,lnaddr.net`)
+- `LNADDRD_BIND`: Address to bind the server to (default: `0.0.0.0:8080` for Docker)
+- `LNADDRD_DATABASE_URL`: PostgreSQL connection string
+- `LNADDRD_WARNING`: (Optional) Warning message for the registration page
+
+You must have a PostgreSQL database accessible to the container. See the `docker-compose.yml` for an example of running with a local database.
+
 ### 4. NixOS Module
 
 `lnaddrd` comes with a NixOS module for easy deployment. Example configuration:
