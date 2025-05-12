@@ -2,6 +2,8 @@
 
 `lnaddrd` is a simple Lightning Address server that allows users to register Lightning Addresses (e.g., `user@lnaddr.org`) which forward incoming payments to the user's LNURL. This makes it easy to provide your own domains to users without also being their LNURL provider.
 
+You can see a demo at https://lnaddr.org.
+
 <div align="center">
   <img src="screenshots/register.png" alt="Registration Form" height="400" style="margin-right: 20px">
   <img src="screenshots/details.png" alt="Address Details" height="400">
