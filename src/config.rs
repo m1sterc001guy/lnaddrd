@@ -2,7 +2,7 @@ use std::net::SocketAddr;
 
 use clap::Parser;
 
-#[derive(Parser)]
+#[derive(Debug, Clone, Parser)]
 pub struct Config {
     /// One or more domain names to serve. Specify multiple times for multiple domains.
     #[clap(
@@ -24,4 +24,8 @@ pub struct Config {
         default_value = "postgres://localhost:5432/lnaddrd"
     )]
     pub database: String,
+
+    /// Warning displayed on registration page
+    #[clap(long, env = "LNADDRD_WARNING")]
+    pub warning: Option<String>,
 }

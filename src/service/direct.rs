@@ -72,7 +72,8 @@ impl ILnaddrService for DirectLnaddrService {
         // Test if the lnurl is valid
         LnUrl::decode(lnurl.to_owned())?;
 
-        let authentication_token = rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 20);
+        let authentication_token =
+            rand::distributions::Alphanumeric.sample_string(&mut rand::thread_rng(), 20);
         self.repo
             .add_payment_address(domain, username, lnurl, &authentication_token)
             .await?;

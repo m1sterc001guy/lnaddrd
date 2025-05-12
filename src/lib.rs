@@ -9,7 +9,9 @@ use axum::{
 };
 use config::Config;
 use repository::pg::PgPaymentAddressRepository;
+use service::LnaddrService;
 use service::direct::DirectLnaddrService;
+use std::sync::Arc;
 use tokio::net::TcpListener;
 use tracing::{debug, info};
 use ui::{lnaddress_details, register_form, register_form_submit};
@@ -20,12 +22,23 @@ pub mod repository;
 pub mod service;
 pub mod ui;
 
+#[derive(Clone)]
+pub struct AppState {
+    pub service: LnaddrService,
+    pub config: Arc<Config>,
+}
+
 pub async fn serve(config: &Config) -> Result<()> {
     debug!(db=%config.database, "Opening database connection");
     let lnaddr_repo = PgPaymentAddressRepository::new(&config.database)?.into_dyn();
 
     debug!(domains=?config.domains, "Starting LN address service");
     let lnaddr_service = DirectLnaddrService::new(lnaddr_repo, config.domains.clone()).into_dyn();
+
+    let app_state = AppState {
+        service: lnaddr_service.clone(),
+        config: Arc::new(config.clone()),
+    };
 
     let app = Router::new()
         .route("/domains", get(list_domains_handler))
@@ -38,7 +51,7 @@ pub async fn serve(config: &Config) -> Result<()> {
         .route("/", get(register_form))
         .route("/ui/register", post(register_form_submit))
         .route("/ui/lnaddress/:domain/:username", get(lnaddress_details))
-        .with_state(lnaddr_service.clone())
+        .with_state(app_state)
         .fallback(|_req: axum::http::Request<axum::body::Body>| async move {
             axum::http::StatusCode::NOT_FOUND
         })

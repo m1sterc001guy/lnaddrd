@@ -5,12 +5,14 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::service::{LnaddrService, RegisterResponse};
+use crate::AppState;
+use crate::service::RegisterResponse;
 
 pub async fn list_domains_handler(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
 ) -> Result<Json<Vec<String>>, axum::http::StatusCode> {
-    service
+    state
+        .service
         .list_domains()
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)
@@ -18,11 +20,12 @@ pub async fn list_domains_handler(
 }
 
 pub async fn get_lnaddr_manifest_handler(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
     Host(domain): Host,
     Path(username): Path<String>,
 ) -> Result<Json<lnurl::pay::PayResponse>, axum::http::StatusCode> {
-    service
+    state
+        .service
         .get_lnaddr_manifest(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?
@@ -31,10 +34,11 @@ pub async fn get_lnaddr_manifest_handler(
 }
 
 pub async fn get_lnaddr_handler(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
     Path((domain, username)): Path<(String, String)>,
 ) -> Result<Json<lnurl::lnurl::LnUrl>, axum::http::StatusCode> {
-    service
+    state
+        .service
         .get_lnaddr(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?
@@ -43,10 +47,11 @@ pub async fn get_lnaddr_handler(
 }
 
 pub async fn register_lnaddr_handler(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
     Json(payload): Json<RegisterRequest>,
 ) -> Result<Json<RegisterResponse>, axum::http::StatusCode> {
-    service
+    state
+        .service
         .register_lnaddr(&payload.domain, &payload.username, &payload.lnurl)
         .await
         .map_err(|_| axum::http::StatusCode::BAD_REQUEST)

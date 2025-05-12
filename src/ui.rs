@@ -1,5 +1,5 @@
+use crate::AppState;
 use crate::api::RegisterRequest;
-use crate::service::LnaddrService;
 use axum::{
     Form,
     extract::Path,
@@ -32,8 +32,9 @@ fn common_head(title: &str) -> Markup {
     }
 }
 
-pub async fn register_form(State(service): State<LnaddrService>) -> impl IntoResponse {
-    let domains = service.list_domains().await.unwrap_or_default();
+pub async fn register_form(State(state): State<AppState>) -> impl IntoResponse {
+    let domains = state.service.list_domains().await.unwrap_or_default();
+    let warning = state.config.warning.clone();
     let markup = html! {
         (DOCTYPE)
         html lang="en" {
@@ -41,6 +42,12 @@ pub async fn register_form(State(service): State<LnaddrService>) -> impl IntoRes
             body class="bg-gray-50 min-h-screen flex items-center justify-center" {
                 div class="w-full max-w-lg mx-auto p-6 bg-white rounded-lg shadow-lg" {
                     h1 class="text-3xl font-bold mb-6 text-center text-gray-900" { "Register LN Address" }
+                    @if let Some(warning) = warning {
+                        div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 dark:bg-gray-800 dark:text-yellow-300" role="alert" {
+                            span class="font-bold" { "Warning:" }
+                            " " (maud::PreEscaped(warning))
+                        }
+                    }
                     form id="register-form" method="post" action="/ui/register" class="space-y-6"  {
                         div {
                             label for="domain" class="block mb-2 text-sm font-medium text-gray-900" { "Domain" }
@@ -68,7 +75,7 @@ pub async fn register_form(State(service): State<LnaddrService>) -> impl IntoRes
 }
 
 pub async fn register_form_submit(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
     Form(form): Form<RegisterForm>,
 ) -> impl IntoResponse {
     let req = RegisterRequest {
@@ -76,7 +83,8 @@ pub async fn register_form_submit(
         username: form.username.clone(),
         lnurl: form.lnurl,
     };
-    match service
+    match state
+        .service
         .register_lnaddr(&req.domain, &req.username, &req.lnurl)
         .await
     {
@@ -106,16 +114,18 @@ pub async fn register_form_submit(
 }
 
 pub async fn lnaddress_details(
-    State(service): State<LnaddrService>,
+    State(state): State<AppState>,
     Path((domain, username)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, axum::http::StatusCode> {
     let lnaddr = format!("{username}@{domain}");
-    let lnurl = service
+    let lnurl = state
+        .service
         .get_lnaddr(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(axum::http::StatusCode::NOT_FOUND)?;
-    let manifest = service
+    let manifest = state
+        .service
         .get_lnaddr_manifest(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?

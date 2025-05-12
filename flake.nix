@@ -77,6 +77,11 @@
               default = self.packages.${system}.default;
               description = "The package to use for the lnaddrd service. Defaults to the flake's default package if available.";
             };
+            warning = mkOption {
+              type = types.nullOr types.str;
+              default = null;
+              description = "Warning displayed on registration page.";
+            };
           };
 
           config = mkIf config.services.lnaddrd.enable {
@@ -97,6 +102,7 @@
                 LNADDRD_DOMAINS = concatStringsSep "," config.services.lnaddrd.domains;
                 LNADDRD_BIND = config.services.lnaddrd.bind;
                 LNADDRD_DATABASE_URL = config.services.lnaddrd.database;
+                LNADDRD_WARNING = config.services.lnaddrd.warning;
               };
               serviceConfig = {
                 ExecStart = "${config.services.lnaddrd.package}/bin/lnaddrd";
