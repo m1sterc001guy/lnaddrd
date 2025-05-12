@@ -10,6 +10,7 @@ use maud::{DOCTYPE, Markup, html};
 use qrcode::QrCode;
 use qrcode::render::svg;
 use serde::Deserialize;
+use crate::repository::DestinationPaymentAddress;
 
 #[derive(Deserialize)]
 pub struct RegisterForm {
@@ -62,7 +63,7 @@ pub async fn register_form(State(state): State<AppState>) -> impl IntoResponse {
                             input name="username" id="username" required class="block w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500" {}
                         }
                         div {
-                            label for="lnurl" class="block mb-2 text-sm font-medium text-gray-900" { "LNURL" }
+                            label for="lnurl" class="block mb-2 text-sm font-medium text-gray-900" { "LNURL or Lightning Address" }
                             textarea name="lnurl" id="lnurl" required rows="3" class="block w-full p-2.5 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 focus:ring-blue-500 focus:border-blue-500 resize-y" style="word-break: break-all;" {}
                         }
                         button type="submit" class="w-full text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center" { "Register" }
@@ -124,9 +125,9 @@ pub async fn lnaddress_details(
     Path((domain, username)): Path<(String, String)>,
 ) -> Result<impl IntoResponse, axum::http::StatusCode> {
     let lnaddr = format!("{username}@{domain}");
-    let lnurl = state
+    let destination_addr = state
         .service
-        .get_lnaddr(&domain, &username)
+        .get_destination(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(axum::http::StatusCode::NOT_FOUND)?;
@@ -156,9 +157,17 @@ pub async fn lnaddress_details(
                     div class="mb-4" {
                         p class="mb-2" { b { "Lightning Address:" } " " (lnaddr) }
                         div class="flex justify-center mb-2" { (maud::PreEscaped(lnaddr_svg)) }
-                        p class="mb-2" { b { "LNURL:" } " " span class="break-all font-mono" { (lnurl) } }
-                        p class="mb-2" { b { "LNURL Decoded:" } " " span class="break-all font-mono" { (lnurl.url) } }
-                        p class="mb-2" { b { "LNURL Manifest:" } }
+                        p class="mb-2" {
+                            b {
+                                (match &destination_addr {
+                                    DestinationPaymentAddress::Lnurl(_) => "LNURL:",
+                                    DestinationPaymentAddress::LnAddress { .. } => "LN Address:",
+                                })
+                            }
+                            " " span class="break-all font-mono" { (destination_addr) }
+                        }
+                        p class="mb-2" { b { "Decoded:" } " " span class="break-all font-mono" { (destination_addr.url()) } }
+                        p class="mb-2" { b { "Manifest:" } }
                         pre class="bg-gray-100 rounded p-2 text-xs overflow-x-auto" { (manifest_str) }
                     }
                     div class="text-center" {

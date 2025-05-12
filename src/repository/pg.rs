@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{sync::Arc, time::SystemTime};
+use std::{str::FromStr, sync::Arc, time::SystemTime};
 use tracing::info;
 
 use async_trait::async_trait;
@@ -9,7 +9,7 @@ use diesel::{
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
-use super::{IPaymentAddressRepository, PaymentAddress, PaymentAddressRepository};
+use super::{DestinationPaymentAddress, IPaymentAddressRepository, PaymentAddress, PaymentAddressRepository};
 
 type PooledConnection =
     diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>;
@@ -59,7 +59,7 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
         &self,
         domain: &str,
         username: &str,
-        lnurl: &str,
+        destination: DestinationPaymentAddress,
         authentication_token: &str,
     ) -> Result<()> {
         let mut conn = self.pool.get()?;
@@ -68,7 +68,7 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
             .values((
                 payment_addresses::domain.eq(domain),
                 payment_addresses::username.eq(username),
-                payment_addresses::lnurl.eq(lnurl),
+                payment_addresses::lnurl.eq(destination.to_string()),
                 payment_addresses::authentication_token.eq(authentication_token),
             ))
             .execute(&mut conn)?;
@@ -106,7 +106,7 @@ impl From<PaymentAddressEntry> for PaymentAddress {
         Self {
             username: entry.username,
             domain: entry.domain,
-            lnurl: lnurl::lnurl::LnUrl::decode(entry.lnurl).expect("Invalid lnurl"),
+            destination: DestinationPaymentAddress::from_str(&entry.lnurl).expect("Invalid lnurl"),
             authentication_token: entry.authentication_token,
             created_at: entry.created_at,
             updated_at: entry.updated_at,

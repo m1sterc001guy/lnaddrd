@@ -4,8 +4,10 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use lnurl::{lnurl::LnUrl, pay::PayResponse};
+use lnurl::pay::PayResponse;
 use serde::{Deserialize, Serialize};
+
+use crate::repository::DestinationPaymentAddress;
 
 pub type LnaddrService = Arc<dyn ILnaddrService + Send + Sync>;
 
@@ -19,13 +21,13 @@ pub trait ILnaddrService {
         username: &str,
     ) -> Result<Option<PayResponse>>;
 
-    async fn get_lnaddr(&self, domain: &str, username: &str) -> Result<Option<LnUrl>>;
+    async fn get_destination(&self, domain: &str, username: &str) -> Result<Option<DestinationPaymentAddress>>;
 
     async fn register_lnaddr(
         &self,
         domain: &str,
         username: &str,
-        lnurl: &str,
+        destination: &str,
     ) -> Result<RegisterResponse>;
 }
 

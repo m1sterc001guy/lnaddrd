@@ -5,7 +5,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 
-use crate::AppState;
+use crate::{repository::DestinationPaymentAddress, AppState};
 use crate::service::RegisterResponse;
 
 pub async fn list_domains_handler(
@@ -36,10 +36,10 @@ pub async fn get_lnaddr_manifest_handler(
 pub async fn get_lnaddr_handler(
     State(state): State<AppState>,
     Path((domain, username)): Path<(String, String)>,
-) -> Result<Json<lnurl::lnurl::LnUrl>, axum::http::StatusCode> {
+) -> Result<Json<DestinationPaymentAddress>, axum::http::StatusCode> {
     state
         .service
-        .get_lnaddr(&domain, &username)
+        .get_destination(&domain, &username)
         .await
         .map_err(|_| axum::http::StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(axum::http::StatusCode::NOT_FOUND)

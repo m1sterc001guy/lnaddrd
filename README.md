@@ -148,7 +148,6 @@ in
 - 402 payment integration
 - Letting usrs change LNURLs
 - Restrict registration
-- Forward to other LN Addresses, not only LNURLs
 
 ## License
 
