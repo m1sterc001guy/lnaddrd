@@ -5,9 +5,10 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay.url = "github:oxalica/rust-overlay";
+    crane.url = "github:ipetkov/crane";
   };
 
-  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, flake-utils, rust-overlay, crane }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [ (import rust-overlay) ];
@@ -17,6 +18,7 @@
         rust-toolchain = pkgs.rust-bin.stable.latest.default.override {
           extensions = [ "rust-src" "rust-analyzer" ];
         };
+        craneLib = (crane.mkLib pkgs).overrideToolchain (p: rust-toolchain);
       in
       {
         devShells.default = pkgs.mkShell {
@@ -37,15 +39,19 @@
           '';
         };
 
-        packages.default = pkgs.rustPlatform.buildRustPackage {
+        packages.default = craneLib.buildPackage {
           pname = "lnaddrd";
           version = "0.1.0";
-          src = ./.;
+          src = pkgs.lib.fileset.toSource {
+            root = ./.;
+            fileset = pkgs.lib.fileset.unions [
+              (craneLib.fileset.commonCargoSources ./.)
+              ./migrations
+            ];
+          };
+          cargoLock = ./Cargo.lock;
           nativeBuildInputs = [ pkgs.pkg-config ];
           buildInputs = [ pkgs.libpq ];
-          cargoLock = {
-            lockFile = ./Cargo.lock;
-          };
         };
 
         nixosModules.lnaddrd = { config, lib, pkgs, system, ... }: with lib; {
