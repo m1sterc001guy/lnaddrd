@@ -25,6 +25,7 @@ pub trait IPaymentAddressRepository {
     ) -> Result<()>;
 }
 
+#[derive(Debug)]
 pub struct PaymentAddress {
     pub username: String,
     pub domain: String,
