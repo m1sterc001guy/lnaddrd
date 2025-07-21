@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use std::{str::FromStr, sync::Arc, time::SystemTime};
 use tracing::info;
 
@@ -9,7 +9,9 @@ use diesel::{
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 
-use super::{DestinationPaymentAddress, IPaymentAddressRepository, PaymentAddress, PaymentAddressRepository};
+use super::{
+    DestinationPaymentAddress, IPaymentAddressRepository, PaymentAddress, PaymentAddressRepository,
+};
 
 type PooledConnection =
     diesel::r2d2::PooledConnection<diesel::r2d2::ConnectionManager<PgConnection>>;
@@ -74,6 +76,40 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
             .execute(&mut conn)?;
 
         Ok(())
+    }
+
+    async fn remove_payment_address(
+        &self,
+        domain: &str,
+        username: &str,
+        token: &str,
+    ) -> Result<()> {
+        use diesel::prelude::*;
+
+        let mut conn = self.pool.get()?;
+
+        let record: Option<PaymentAddressEntry> = payment_addresses::table
+            .filter(payment_addresses::domain.eq(domain))
+            .filter(payment_addresses::username.eq(username))
+            .first::<PaymentAddressEntry>(&mut conn)
+            .optional()?;
+        match record {
+            None => Ok(()),
+            Some(entry) => {
+                if entry.authentication_token != token {
+                    bail!("Invalid authentication token for payment address {username}@{domain}");
+                }
+
+                diesel::delete(
+                    payment_addresses::table
+                        .filter(payment_addresses::domain.eq(domain))
+                        .filter(payment_addresses::username.eq(username))
+                )
+                .execute(&mut conn)?;
+
+                Ok(())
+            }
+        }
     }
 }
 

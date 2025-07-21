@@ -1,11 +1,12 @@
 use anyhow::Result;
 use api::{
     get_lnaddr_handler, get_lnaddr_manifest_handler, list_domains_handler, register_lnaddr_handler,
+    remove_lnaddr_handler,
 };
 use axum::{
     Router,
     response::IntoResponse,
-    routing::{get, post},
+    routing::{get, post, delete},
 };
 use config::Config;
 use repository::pg::PgPaymentAddressRepository;
@@ -44,6 +45,7 @@ pub async fn serve(config: &Config) -> Result<()> {
         .route("/domains", get(list_domains_handler))
         .route("/lnaddress/:domain/:username", get(get_lnaddr_handler))
         .route("/lnaddress/register", post(register_lnaddr_handler))
+        .route("/lnaddress/remove", delete(remove_lnaddr_handler))
         .route(
             "/.well-known/lnurlp/:username",
             get(get_lnaddr_manifest_handler),

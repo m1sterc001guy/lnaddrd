@@ -2,7 +2,7 @@ pub mod pg;
 
 use std::{fmt::Display, str::FromStr, sync::Arc, time::SystemTime};
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
@@ -23,6 +23,13 @@ pub trait IPaymentAddressRepository {
         destination: DestinationPaymentAddress,
         authentication_token: &str,
     ) -> Result<()>;
+
+    async fn remove_payment_address(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+    ) -> Result<()>;
 }
 
 #[derive(Debug)]
@@ -41,7 +48,7 @@ pub enum DestinationPaymentAddress {
     Lnurl(lnurl::lnurl::LnUrl),
     LnAddress {
         user: String,
-        domain: String,
+        domain: String
     },
 }
 
