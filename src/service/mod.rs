@@ -29,6 +29,13 @@ pub trait ILnaddrService {
         username: &str,
         destination: &str,
     ) -> Result<RegisterResponse>;
+
+    async fn remove_lnaddr(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+    ) -> Result<()>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

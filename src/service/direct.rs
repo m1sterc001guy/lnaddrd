@@ -83,4 +83,15 @@ impl ILnaddrService for DirectLnaddrService {
             authentication_token,
         })
     }
+
+    async fn remove_lnaddr(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+    ) -> Result<()> {
+        self.repo
+            .remove_payment_address(domain, username, authentication_token)
+            .await
+    }
 }
