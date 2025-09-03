@@ -42,7 +42,11 @@ impl ILnaddrService for DirectLnaddrService {
             return Ok(None);
         };
 
-        let response = match self.client.make_request(&lnaddr_entry.destination.url()).await? {
+        let response = match self
+            .client
+            .make_request(&lnaddr_entry.destination.url())
+            .await?
+        {
             LnUrlResponse::LnUrlPayResponse(response) => response,
             LnUrlResponse::LnUrlWithdrawResponse(_) => bail!("Invalid LNURL type: LNURLwithdraw"),
             LnUrlResponse::LnUrlChannelResponse(_) => bail!("Invalid LNURL type: LNURLchannel"),
@@ -51,7 +55,11 @@ impl ILnaddrService for DirectLnaddrService {
         Ok(Some(response))
     }
 
-    async fn get_destination(&self, domain: &str, username: &str) -> Result<Option<DestinationPaymentAddress>> {
+    async fn get_destination(
+        &self,
+        domain: &str,
+        username: &str,
+    ) -> Result<Option<DestinationPaymentAddress>> {
         let Some(lnaddr_entry) = self.repo.get_payment_address(domain, username).await? else {
             return Ok(None);
         };

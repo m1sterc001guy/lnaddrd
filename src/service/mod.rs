@@ -21,7 +21,11 @@ pub trait ILnaddrService {
         username: &str,
     ) -> Result<Option<PayResponse>>;
 
-    async fn get_destination(&self, domain: &str, username: &str) -> Result<Option<DestinationPaymentAddress>>;
+    async fn get_destination(
+        &self,
+        domain: &str,
+        username: &str,
+    ) -> Result<Option<DestinationPaymentAddress>>;
 
     async fn register_lnaddr(
         &self,

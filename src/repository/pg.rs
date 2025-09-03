@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{Result, bail};
 use std::{str::FromStr, sync::Arc, time::SystemTime};
 use tracing::info;
 
@@ -103,7 +103,7 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
                 diesel::delete(
                     payment_addresses::table
                         .filter(payment_addresses::domain.eq(domain))
-                        .filter(payment_addresses::username.eq(username))
+                        .filter(payment_addresses::username.eq(username)),
                 )
                 .execute(&mut conn)?;
 
