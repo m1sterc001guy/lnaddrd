@@ -65,7 +65,7 @@ pub async fn serve(config: &Config) -> Result<()> {
 
 async fn landing_page() -> impl IntoResponse {
     Html(
-        r#"
+        r###"
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -79,88 +79,84 @@ async fn landing_page() -> impl IntoResponse {
                 background: linear-gradient(135deg, #4dd0ff, #2196f3);
                 color: white;
                 text-align: center;
+                scroll-behavior: smooth;
             }
-            header {
-                padding: 60px 20px 40px;
-            }
+            header { padding: 60px 20px 40px; }
             header img {
-                width: 120px;
-                height: 120px;
-                border-radius: 24px;
+                width: 120px; height: 120px; border-radius: 24px;
                 box-shadow: 0 8px 20px rgba(0,0,0,0.3);
             }
-            header h1 {
-                margin-top: 20px;
-                font-size: 2.5rem;
-                font-weight: bold;
-            }
+            header h1 { margin-top: 20px; font-size: 2.5rem; font-weight: bold; }
             .download-btn {
-                display: inline-block;
-                margin-top: 20px;
-                padding: 14px 28px;
-                background: white;
-                color: #2196f3;
-                font-size: 1.2rem;
-                border-radius: 30px;
-                text-decoration: none;
-                font-weight: bold;
-                transition: background 0.2s, color 0.2s;
+                display: inline-block; margin-top: 20px; padding: 14px 28px;
+                background: white; color: #2196f3; font-size: 1.2rem; border-radius: 30px;
+                text-decoration: none; font-weight: bold; transition: background .2s, color .2s;
             }
-            .download-btn:hover {
-                background: #e3f2fd;
-                color: #1976d2;
-            }
-            section {
-                padding: 60px 20px;
-            }
+            .download-btn:hover { background: #e3f2fd; color: #1976d2; }
+            section { padding: 60px 20px; }
+            h2 { font-size: 2rem; margin-bottom: 20px; }
+
             .features {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-                gap: 30px;
-                margin-top: 40px;
+                gap: 30px; margin-top: 40px;
             }
             .feature {
                 background: rgba(255,255,255,0.1);
-                padding: 20px;
-                border-radius: 16px;
-                backdrop-filter: blur(8px);
+                padding: 20px; border-radius: 16px; backdrop-filter: blur(8px);
                 box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                text-align: center;
+                text-align: center; cursor: pointer; transition: transform .2s;
+                text-decoration: none; color: inherit;
             }
-
+            .feature:hover { transform: translateY(-5px); }
             .icon-badge {
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                width: 50px;
-                height: 50px;
-                margin-bottom: 12px;
-                border-radius: 50%;
-                background: white;
-                color: #2196f3;
-                font-size: 1.5rem;
-                font-weight: bold;
+                display: inline-flex; align-items: center; justify-content: center;
+                width: 50px; height: 50px; margin-bottom: 12px; border-radius: 50%;
+                background: white; color: #2196f3; font-size: 1.5rem; font-weight: bold;
                 box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             }
-            .feature h3 {
+
+            .details {
+                text-align: left; max-width: 900px;
+                margin: 20px auto 0 auto;
+            }
+            .details h3 {
                 margin-bottom: 10px;
+                font-size: 1.6rem;
+                display: flex;
+                align-items: center;
+                gap: 12px;
             }
-            .gallery {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 15px;
-                margin-top: 40px;
+
+            .details h3 .icon-badge {
+                flex-shrink: 0;
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
             }
-            .gallery img {
+
+            .details p { margin-bottom: 20px; }
+            .detail-images {
+                display: flex; flex-wrap: wrap; gap: 16px;
+            }
+            .detail-images img {
                 width: 100%;
-                border-radius: 16px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                max-width: 280px;
+                flex: 1 1 220px;
+
+                border-radius: 24px; /* smoother curves */
+                box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+
+                background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+                padding: 8px; /* like a frame */
+                
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                cursor: pointer;
             }
-            footer {
-                margin-top: 60px;
-                padding: 20px;
-                font-size: 0.9rem;
-                color: rgba(255,255,255,0.7);
+
+            .detail-images img:hover {
+                transform: scale(1.05);
+                box-shadow: 0 12px 30px rgba(0,0,0,0.6);
             }
         </style>
     </head>
@@ -168,63 +164,89 @@ async fn landing_page() -> impl IntoResponse {
         <header>
             <img src="/assets/e-cash-app.png" alt="App Icon">
             <h1>The E-Cash App</h1>
-            <a href="https://github.com/fedimint/e-cash-app/releases/download/latest/e-cash-app-0.1.0+10086-2dcd5d63.apk" class="download-btn">
+            <a href="https://github.com/fedimint/e-cash-app/releases/latest/download/e-cash-app.apk" class="download-btn">
                 Download Latest APK
             </a>
         </header>
 
-        <div class="features">
-            <div class="feature">
-                <div class="icon-badge">⚡</div>
-                <h3>First-class Payments</h3>
-                <p>Lightning, Onchain, and E-Cash support in one app.</p>
-            </div>
-            <div class="feature">
-                <div class="icon-badge">📧</div>
-                <h3>Lightning Address</h3>
-                <p>Receive payments easily with your own Lightning Address.</p>
-            </div>
-            <div class="feature">
-                <div class="icon-badge">🔗</div>
-                <h3>Nostr Wallet Connect</h3>
-                <p>Connect seamlessly with apps and services via NWC.</p>
-            </div>
-            <div class="feature">
-                <div class="icon-badge">🌐</div>
-                <h3>Discover Federations</h3>
-                <p>Find and join new federations using Nostr.</p>
-            </div>
-            <div class="feature">
-                <div class="icon-badge">🛡</div>
-                <h3>Automated Backup & Recovery</h3>
-                <p>Your funds are safe with automatic backups and recovery options.</p>
-            </div>
-        </div>
-
         <section>
-            <h2>App Showcase</h2>
-            <div class="gallery">
-                <img src="/assets/1.png" alt="Screenshot 1">
-                <img src="/assets/2.png" alt="Screenshot 2">
-                <img src="/assets/3.png" alt="Screenshot 3">
-                <img src="/assets/4.png" alt="Screenshot 4">
-                <img src="/assets/5.png" alt="Screenshot 5">
-                <img src="/assets/6.png" alt="Screenshot 6">
-                <img src="/assets/7.png" alt="Screenshot 7">
-                <img src="/assets/8.png" alt="Screenshot 8">
-                <img src="/assets/9.png" alt="Screenshot 9">
-                <img src="/assets/10.png" alt="Screenshot 10">
-                <img src="/assets/11.png" alt="Screenshot 11">
-                <img src="/assets/12.png" alt="Screenshot 12">
-                <img src="/assets/13.png" alt="Screenshot 13">
-                <img src="/assets/14.png" alt="Screenshot 14">
-                <img src="/assets/15.png" alt="Screenshot 15">
-                <img src="/assets/16.png" alt="Screenshot 16">
-                <img src="/assets/17.png" alt="Screenshot 17">
+            <h2>Features</h2>
+            <div class="features">
+                <a href="#feature1" class="feature">
+                    <div class="icon-badge">⚡</div>
+                    <h3>First-class Payments</h3>
+                    <p>Lightning, Onchain, and E-Cash.</p>
+                </a>
+                <a href="#feature2" class="feature">
+                    <div class="icon-badge">📧</div>
+                    <h3>Lightning Address</h3>
+                    <p>Your own Lightning Address.</p>
+                </a>
+                <a href="#feature3" class="feature">
+                    <div class="icon-badge">🔗</div>
+                    <h3>Nostr Wallet Connect</h3>
+                    <p>Seamless NWC integration.</p>
+                </a>
+                <a href="#feature4" class="feature">
+                    <div class="icon-badge">🌐</div>
+                    <h3>Discover Federations</h3>
+                    <p>Find and join via Nostr.</p>
+                </a>
+                <a href="#feature5" class="feature">
+                    <div class="icon-badge">🛡</div>
+                    <h3>Backup & Recovery</h3>
+                    <p>Automated safety tools.</p>
+                </a>
+            </div>
+        </section>
+
+        <!-- Detailed sections (click cards to scroll here) -->
+        <section id="feature1" class="details">
+            <h3><span class="icon-badge">⚡</span>First-class Payments</h3>
+            <p>Full support for Lightning, Onchain, and E-Cash payments in a single unified wallet.</p>
+            <div class="detail-images">
+                <img src="/assets/1.png" alt="Payments 1">
+                <img src="/assets/2.png" alt="Payments 2">
+            </div>
+        </section>
+
+        <section id="feature2" class="details">
+            <h3><span class="icon-badge">📧</span>Lightning Address</h3>
+            <p>Receive payments with your personal Lightning Address, making payments as simple as email.</p>
+            <div class="detail-images">
+                <img src="/assets/3.png" alt="Lightning Address 1">
+                <img src="/assets/4.png" alt="Lightning Address 2">
+            </div>
+        </section>
+
+        <section id="feature3" class="details">
+            <h3><span class="icon-badge">🔗</span>Nostr Wallet Connect</h3>
+            <p>Connect your wallet to apps and services instantly using Nostr Wallet Connect.</p>
+            <div class="detail-images">
+                <img src="/assets/5.png" alt="NWC 1">
+                <img src="/assets/6.png" alt="NWC 2">
+            </div>
+        </section>
+
+        <section id="feature4" class="details">
+            <h3><span class="icon-badge">🌐</span>Discover Federations</h3>
+            <p>Use Nostr to discover, join, and interact with federations around the world.</p>
+            <div class="detail-images">
+                <img src="/assets/7.png" alt="Federations 1">
+                <img src="/assets/8.png" alt="Federations 2">
+            </div>
+        </section>
+
+        <section id="feature5" class="details">
+            <h3><span class="icon-badge">🛡</span>Automated Backup & Recovery</h3>
+            <p>Never lose your funds — with built-in backup and recovery your wallet is always safe.</p>
+            <div class="detail-images">
+                <img src="/assets/9.png" alt="Backup 1">
+                <img src="/assets/10.png" alt="Backup 2">
             </div>
         </section>
     </body>
     </html>
-    "#,
+    "###,
     )
 }
