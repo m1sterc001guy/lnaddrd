@@ -164,7 +164,7 @@ async fn landing_page() -> impl IntoResponse {
         <header>
             <img src="/assets/e-cash-app.png" alt="App Icon">
             <h1>The E-Cash App</h1>
-            <a href="https://github.com/fedimint/e-cash-app/releases/latest/download/e-cash-app.apk" class="download-btn">
+            <a href="https://github.com/fedimint/e-cash-app/releases/download/latest/e-cash-app-0.1.0+10086-2dcd5d63.apk" class="download-btn">
                 Download Latest APK
             </a>
         </header>
@@ -172,74 +172,80 @@ async fn landing_page() -> impl IntoResponse {
         <section>
             <h2>Features</h2>
             <div class="features">
-                <a href="#feature1" class="feature">
+                <a href="#payments" class="feature">
                     <div class="icon-badge">⚡</div>
-                    <h3>First-class Payments</h3>
-                    <p>Lightning, Onchain, and E-Cash.</p>
+                    <h3>Choose your payment method</h3>
+                    <p>Lightning, Onchain, and E-Cash support.</p>
                 </a>
-                <a href="#feature2" class="feature">
+                <a href="#lnaddress" class="feature">
                     <div class="icon-badge">📧</div>
                     <h3>Lightning Address</h3>
-                    <p>Your own Lightning Address.</p>
+                    <p>Claim your per-federation Lightning Address.</p>
                 </a>
-                <a href="#feature3" class="feature">
+                <a href="#nwc" class="feature">
                     <div class="icon-badge">🔗</div>
                     <h3>Nostr Wallet Connect</h3>
-                    <p>Seamless NWC integration.</p>
+                    <p>Connect The E-Cash to NWC compatible apps for easy zaps.</p>
                 </a>
-                <a href="#feature4" class="feature">
+                <a href="#discover" class="feature">
                     <div class="icon-badge">🌐</div>
                     <h3>Discover Federations</h3>
-                    <p>Find and join via Nostr.</p>
+                    <p>Find new federations using Nostr.</p>
                 </a>
-                <a href="#feature5" class="feature">
+                <a href="#recover" class="feature">
                     <div class="icon-badge">🛡</div>
                     <h3>Backup & Recovery</h3>
-                    <p>Automated safety tools.</p>
+                    <p>Keep your e-cash safe using a familiar seed phrase.</p>
                 </a>
             </div>
         </section>
 
         <!-- Detailed sections (click cards to scroll here) -->
-        <section id="feature1" class="details">
-            <h3><span class="icon-badge">⚡</span>First-class Payments</h3>
-            <p>Full support for Lightning, Onchain, and E-Cash payments in a single unified wallet.</p>
+        <section id="payments" class="details">
+            <h3><span class="icon-badge">⚡</span>Choose your payment methods</h3>
+            <p>The E-Cash app has full support for Lightning, Onchain, and E-Cash payments in a single unified wallet.</p>
             <div class="detail-images">
-                <img src="/assets/1.png" alt="Payments 1">
-                <img src="/assets/2.png" alt="Payments 2">
+                <img src="/assets/withdraw_ecash.png" alt="Payments 1">
+                <img src="/assets/redeem_ecash.png" alt="Payments 2">
+                <img src="/assets/receive.png" alt="Payments 3">
+                <img src="/assets/notes.png" alt="Payments 4">
+                <img src="/assets/lightning_request.png" alt="Payments 5">
+                <img src="/assets/lightning_receive.png" alt="Payments 6">
+                <img src="/assets/ecash_receive.png" alt="Payments 7">
+                <img src="/assets/addresses.png" alt="Payments 8">
+                <img src="/assets/deposit.png" alt="Payments 9">
             </div>
         </section>
 
-        <section id="feature2" class="details">
+        <section id="lnaddress" class="details">
             <h3><span class="icon-badge">📧</span>Lightning Address</h3>
-            <p>Receive payments with your personal Lightning Address, making payments as simple as email.</p>
+            <p>Receive payments with your personal per-federation Lightning Address.</p>
             <div class="detail-images">
                 <img src="/assets/3.png" alt="Lightning Address 1">
                 <img src="/assets/4.png" alt="Lightning Address 2">
             </div>
         </section>
 
-        <section id="feature3" class="details">
+        <section id="nwc" class="details">
             <h3><span class="icon-badge">🔗</span>Nostr Wallet Connect</h3>
-            <p>Connect your wallet to apps and services instantly using Nostr Wallet Connect.</p>
+            <p>Connect The E-Cash App to Nostr apps instantly using Nostr Wallet Connect for easy zaps.</p>
             <div class="detail-images">
-                <img src="/assets/5.png" alt="NWC 1">
-                <img src="/assets/6.png" alt="NWC 2">
+                <img src="/assets/nostr_relays.png" alt="NWC 1">
             </div>
         </section>
 
-        <section id="feature4" class="details">
+        <section id="discover" class="details">
             <h3><span class="icon-badge">🌐</span>Discover Federations</h3>
-            <p>Use Nostr to discover, join, and interact with federations around the world.</p>
+            <p>The E-Cash app using NIP87 to find new joinable federations.</p>
             <div class="detail-images">
-                <img src="/assets/7.png" alt="Federations 1">
-                <img src="/assets/8.png" alt="Federations 2">
+                <img src="/assets/discover.png" alt="Federations 1">
+                <img src="/assets/preview.png" alt="Federations 2">
             </div>
         </section>
 
-        <section id="feature5" class="details">
+        <section id="recover" class="details">
             <h3><span class="icon-badge">🛡</span>Automated Backup & Recovery</h3>
-            <p>Never lose your funds — with built-in backup and recovery your wallet is always safe.</p>
+            <p>The E-Cash App supports backup recovery using a familiar seed phrase. The user's federations are also encrypted and backed up to Nostr, enabling automated recovery.</p>
             <div class="detail-images">
                 <img src="/assets/9.png" alt="Backup 1">
                 <img src="/assets/10.png" alt="Backup 2">
