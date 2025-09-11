@@ -16,6 +16,9 @@ use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::{debug, info};
+use reqwest::Client;
+use semver::Version;
+use serde::Deserialize;
 
 pub mod api;
 pub mod config;
@@ -63,9 +66,59 @@ pub async fn serve(config: &Config) -> Result<()> {
     Ok(())
 }
 
+#[derive(Deserialize)]
+struct Release {
+    tag_name: String,
+    assets: Vec<Asset>,
+    draft: bool,
+    prerelease: bool,
+}
+
+#[derive(Deserialize)]
+struct Asset {
+    browser_download_url: String,
+    name: String,
+}
+
+async fn fetch_latest_apk_url() -> Result<String> {
+    let client = Client::new();
+    let releases: Vec<Release> = client
+        .get("https://api.github.com/repos/fedimint/e-cash-app/releases")
+        .header("User-Agent", "e-cash-app-server") // GitHub requires UA
+        .send()
+        .await?
+        .json()
+        .await?;
+
+    // Sort releases by semver tag
+    let mut releases = releases
+        .into_iter()
+        .filter(|r| !r.draft)
+        //.filter(|r| !r.draft && !r.prerelease) // only stable
+        .collect::<Vec<_>>();
+
+    releases.sort_by(|a, b| {
+        let va = Version::parse(a.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0,0,0));
+        let vb = Version::parse(b.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0,0,0));
+        vb.cmp(&va) // descending order
+    });
+
+    // Get first release with an .apk asset
+    for release in releases {
+        if let Some(apk) = release.assets.iter().find(|a| a.name.ends_with(".apk")) {
+            return Ok(apk.browser_download_url.clone());
+        }
+    }
+
+    Err(anyhow::anyhow!("No APK found in releases"))
+}
+
 async fn landing_page() -> impl IntoResponse {
-    Html(
-        r###"
+    let apk_url = fetch_latest_apk_url()
+        .await
+        .expect("Could not get latest apk");
+
+    let tmpl = r###"
     <!DOCTYPE html>
     <html lang="en">
     <head>
@@ -164,7 +217,7 @@ async fn landing_page() -> impl IntoResponse {
         <header>
             <img src="/assets/e-cash-app.png" alt="App Icon">
             <h1>The E-Cash App</h1>
-            <a href="https://github.com/fedimint/e-cash-app/releases/download/latest/e-cash-app-0.1.0+10086-2dcd5d63.apk" class="download-btn">
+            <a href="{apk_url}" class="download-btn">
                 Download Latest APK
             </a>
         </header>
@@ -173,12 +226,12 @@ async fn landing_page() -> impl IntoResponse {
             <h2>Features</h2>
             <div class="features">
                 <a href="#payments" class="feature">
-                    <div class="icon-badge">⚡</div>
+                    <div class="icon-badge">₿</div>
                     <h3>Choose your payment method</h3>
                     <p>Lightning, Onchain, and E-Cash support.</p>
                 </a>
                 <a href="#lnaddress" class="feature">
-                    <div class="icon-badge">📧</div>
+                    <div class="icon-badge">⚡</div>
                     <h3>Lightning Address</h3>
                     <p>Claim your per-federation Lightning Address.</p>
                 </a>
@@ -202,27 +255,31 @@ async fn landing_page() -> impl IntoResponse {
 
         <!-- Detailed sections (click cards to scroll here) -->
         <section id="payments" class="details">
-            <h3><span class="icon-badge">⚡</span>Choose your payment methods</h3>
+            <h3><span class="icon-badge">₿</span>Choose your payment method</h3>
             <p>The E-Cash app has full support for Lightning, Onchain, and E-Cash payments in a single unified wallet.</p>
             <div class="detail-images">
                 <img src="/assets/withdraw_ecash.png" alt="Payments 1">
-                <img src="/assets/redeem_ecash.png" alt="Payments 2">
-                <img src="/assets/receive.png" alt="Payments 3">
-                <img src="/assets/notes.png" alt="Payments 4">
                 <img src="/assets/lightning_request.png" alt="Payments 5">
-                <img src="/assets/lightning_receive.png" alt="Payments 6">
-                <img src="/assets/ecash_receive.png" alt="Payments 7">
-                <img src="/assets/addresses.png" alt="Payments 8">
-                <img src="/assets/deposit.png" alt="Payments 9">
+                <img src="/assets/addresses_copy.png" alt="Payments 10">
+                <img src="/assets/receive.png" alt="Payments 3">
+                <img src="/assets/notes2.png" alt="Payments 4">
+                <img src="/assets/lightning_receive3.png" alt="Payments 6">
+                <img src="/assets/ecash_receive2.png" alt="Payments 7">
+                <img src="/assets/redeem_ecash2.png" alt="Payments 8">
+                <img src="/assets/addresses_received.png" alt="Payments 9">
+                <img src="/assets/gateways2.png" alt="Payments 10">
+                <img src="/assets/pending_onchain2.png" alt="Payments 11">
             </div>
         </section>
 
         <section id="lnaddress" class="details">
-            <h3><span class="icon-badge">📧</span>Lightning Address</h3>
+            <h3><span class="icon-badge">⚡</span>Lightning Address</h3>
             <p>Receive payments with your personal per-federation Lightning Address.</p>
             <div class="detail-images">
-                <img src="/assets/3.png" alt="Lightning Address 1">
-                <img src="/assets/4.png" alt="Lightning Address 2">
+                <img src="/assets/lightning_address.png" alt="Lightning Address 1">
+                <img src="/assets/claim_lnaddress.png" alt="Lightning Address 2">
+                <img src="/assets/lnaddress_qr.png" alt="Lightning Address 3">
+                <img src="/assets/lnurl.png" alt="Lightning Address 4">
             </div>
         </section>
 
@@ -231,6 +288,7 @@ async fn landing_page() -> impl IntoResponse {
             <p>Connect The E-Cash App to Nostr apps instantly using Nostr Wallet Connect for easy zaps.</p>
             <div class="detail-images">
                 <img src="/assets/nostr_relays.png" alt="NWC 1">
+                <img src="/assets/nostr_wallet_connect.png" alt="NWC 2">
             </div>
         </section>
 
@@ -238,8 +296,10 @@ async fn landing_page() -> impl IntoResponse {
             <h3><span class="icon-badge">🌐</span>Discover Federations</h3>
             <p>The E-Cash app using NIP87 to find new joinable federations.</p>
             <div class="detail-images">
-                <img src="/assets/discover.png" alt="Federations 1">
+                <img src="/assets/discover2.png" alt="Federations 1">
                 <img src="/assets/preview.png" alt="Federations 2">
+                <img src="/assets/fed_preview.png" alt="Federations 3">
+                <img src="/assets/utxos2.png" alt="Federations 4">
             </div>
         </section>
 
@@ -247,12 +307,15 @@ async fn landing_page() -> impl IntoResponse {
             <h3><span class="icon-badge">🛡</span>Automated Backup & Recovery</h3>
             <p>The E-Cash App supports backup recovery using a familiar seed phrase. The user's federations are also encrypted and backed up to Nostr, enabling automated recovery.</p>
             <div class="detail-images">
-                <img src="/assets/9.png" alt="Backup 1">
-                <img src="/assets/10.png" alt="Backup 2">
+                <img src="/assets/backup/create_wallet.png" alt="Backup 1">
+                <img src="/assets/backup/recover.png" alt="Backup 2">
+                <img src="/assets/backup/rejoining.png" alt="Backup 2">
+                <img src="/assets/backup/lightning_module.png" alt="Backup 2">
             </div>
         </section>
     </body>
     </html>
-    "###,
-    )
+    "###;
+    let html = tmpl.replace("{apk_url}", &apk_url);
+    Html(html)
 }
