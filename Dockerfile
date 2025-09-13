@@ -24,6 +24,9 @@ RUN apt-get update && apt-get install -y libpq5 ca-certificates && rm -rf /var/l
 # Copy the binary from the builder
 COPY --from=builder /app/target/release/lnaddrd /usr/local/bin/lnaddrd
 
+# Copy assets into the container
+COPY --from=builder /app/assets ./assets
+
 # Expose the default port
 EXPOSE 8080
 

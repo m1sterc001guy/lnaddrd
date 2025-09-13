@@ -93,8 +93,7 @@ async fn fetch_latest_apk_url() -> Result<String> {
     // Sort releases by semver tag
     let mut releases = releases
         .into_iter()
-        .filter(|r| !r.draft)
-        //.filter(|r| !r.draft && !r.prerelease) // only stable
+        .filter(|r| !r.draft && !r.prerelease) // only stable
         .collect::<Vec<_>>();
 
     releases.sort_by(|a, b| {
