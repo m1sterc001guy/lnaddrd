@@ -16,12 +16,18 @@ pub trait IPaymentAddressRepository {
         username: &str,
     ) -> Result<Option<PaymentAddress>>;
 
+    async fn get_payment_address_by_recipient_pk(
+        &self,
+        recipient_pk: &str,
+    ) -> Result<Option<PaymentAddress>>;
+
     async fn add_payment_address(
         &self,
         domain: &str,
         username: &str,
         destination: DestinationPaymentAddress,
         authentication_token: &str,
+        recipient_pk: Option<&str>,
     ) -> Result<()>;
 
     async fn remove_payment_address(
@@ -29,6 +35,21 @@ pub trait IPaymentAddressRepository {
         domain: &str,
         username: &str,
         authentication_token: &str,
+    ) -> Result<()>;
+
+    async fn update_authentication_token(
+        &self,
+        domain: &str,
+        username: &str,
+        new_token: &str,
+    ) -> Result<()>;
+
+    async fn update_recipient_pk(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+        recipient_pk: &str,
     ) -> Result<()>;
 }
 
@@ -38,6 +59,7 @@ pub struct PaymentAddress {
     pub domain: String,
     pub destination: DestinationPaymentAddress,
     pub authentication_token: String,
+    pub recipient_pk: Option<String>,
     pub created_at: SystemTime,
     pub updated_at: SystemTime,
 }

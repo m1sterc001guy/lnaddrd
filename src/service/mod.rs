@@ -32,6 +32,7 @@ pub trait ILnaddrService {
         domain: &str,
         username: &str,
         destination: &str,
+        recipient_pk: Option<&str>,
     ) -> Result<RegisterResponse>;
 
     async fn remove_lnaddr(
@@ -40,10 +41,52 @@ pub trait ILnaddrService {
         username: &str,
         authentication_token: &str,
     ) -> Result<()>;
+
+    async fn reverse_lookup_by_recipient_pk(
+        &self,
+        recipient_pk: &str,
+    ) -> Result<Option<ReverseLookupResponse>>;
+
+    async fn create_challenge(&self, recipient_pk: &str) -> Result<ChallengeResponse>;
+
+    async fn reclaim_lnaddr(
+        &self,
+        recipient_pk: &str,
+        challenge: &str,
+        signature: &str,
+    ) -> Result<ReclaimResponse>;
+
+    async fn update_recipient_pk(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+        recipient_pk: &str,
+    ) -> Result<()>;
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RegisterResponse {
     pub lnaddr: String,
+    pub authentication_token: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReverseLookupResponse {
+    pub username: String,
+    pub domain: String,
+    pub lnurl: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChallengeResponse {
+    pub challenge: String,
+    pub expires_at: u64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReclaimResponse {
+    pub username: String,
+    pub domain: String,
     pub authentication_token: String,
 }

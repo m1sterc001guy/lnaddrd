@@ -57,12 +57,29 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
         }
     }
 
+    async fn get_payment_address_by_recipient_pk(
+        &self,
+        recipient_pk: &str,
+    ) -> Result<Option<PaymentAddress>> {
+        let mut conn = self.pool.get()?;
+
+        match payment_addresses::table
+            .filter(payment_addresses::recipient_pk.eq(recipient_pk))
+            .first::<PaymentAddressEntry>(&mut conn)
+        {
+            Ok(entry) => Ok(Some(entry.into())),
+            Err(diesel::result::Error::NotFound) => Ok(None),
+            Err(e) => Err(e.into()),
+        }
+    }
+
     async fn add_payment_address(
         &self,
         domain: &str,
         username: &str,
         destination: DestinationPaymentAddress,
         authentication_token: &str,
+        recipient_pk: Option<&str>,
     ) -> Result<()> {
         let mut conn = self.pool.get()?;
 
@@ -72,6 +89,7 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
                 payment_addresses::username.eq(username),
                 payment_addresses::lnurl.eq(destination.to_string()),
                 payment_addresses::authentication_token.eq(authentication_token),
+                payment_addresses::recipient_pk.eq(recipient_pk),
             ))
             .execute(&mut conn)?;
 
@@ -111,6 +129,64 @@ impl IPaymentAddressRepository for PgPaymentAddressRepository {
             }
         }
     }
+
+    async fn update_authentication_token(
+        &self,
+        domain: &str,
+        username: &str,
+        new_token: &str,
+    ) -> Result<()> {
+        let mut conn = self.pool.get()?;
+
+        let updated = diesel::update(
+            payment_addresses::table
+                .filter(payment_addresses::domain.eq(domain))
+                .filter(payment_addresses::username.eq(username)),
+        )
+        .set(payment_addresses::authentication_token.eq(new_token))
+        .execute(&mut conn)?;
+
+        if updated == 0 {
+            bail!("No payment address found for {username}@{domain}");
+        }
+
+        Ok(())
+    }
+
+    async fn update_recipient_pk(
+        &self,
+        domain: &str,
+        username: &str,
+        authentication_token: &str,
+        recipient_pk: &str,
+    ) -> Result<()> {
+        let mut conn = self.pool.get()?;
+
+        let record: Option<PaymentAddressEntry> = payment_addresses::table
+            .filter(payment_addresses::domain.eq(domain))
+            .filter(payment_addresses::username.eq(username))
+            .first::<PaymentAddressEntry>(&mut conn)
+            .optional()?;
+
+        match record {
+            None => bail!("No payment address found for {username}@{domain}"),
+            Some(entry) => {
+                if entry.authentication_token != authentication_token {
+                    bail!("Invalid authentication token for payment address {username}@{domain}");
+                }
+
+                diesel::update(
+                    payment_addresses::table
+                        .filter(payment_addresses::domain.eq(domain))
+                        .filter(payment_addresses::username.eq(username)),
+                )
+                .set(payment_addresses::recipient_pk.eq(Some(recipient_pk)))
+                .execute(&mut conn)?;
+
+                Ok(())
+            }
+        }
+    }
 }
 
 diesel::table! {
@@ -120,6 +196,7 @@ diesel::table! {
         domain -> VarChar,
         lnurl -> Text,
         authentication_token -> VarChar,
+        recipient_pk -> Nullable<VarChar>,
         created_at -> Timestamp,
         updated_at -> Timestamp,
     }
@@ -133,6 +210,7 @@ struct PaymentAddressEntry {
     domain: String,
     lnurl: String,
     authentication_token: String,
+    recipient_pk: Option<String>,
     created_at: SystemTime,
     updated_at: SystemTime,
 }
@@ -144,6 +222,7 @@ impl From<PaymentAddressEntry> for PaymentAddress {
             domain: entry.domain,
             destination: DestinationPaymentAddress::from_str(&entry.lnurl).expect("Invalid lnurl"),
             authentication_token: entry.authentication_token,
+            recipient_pk: entry.recipient_pk,
             created_at: entry.created_at,
             updated_at: entry.updated_at,
         }

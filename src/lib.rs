@@ -1,24 +1,25 @@
 use anyhow::Result;
 use api::{
-    get_lnaddr_handler, get_lnaddr_manifest_handler, list_domains_handler, register_lnaddr_handler,
-    remove_lnaddr_handler,
+    challenge_handler, get_lnaddr_handler, get_lnaddr_manifest_handler, list_domains_handler,
+    reclaim_lnaddr_handler, register_lnaddr_handler, remove_lnaddr_handler, reverse_lookup_handler,
+    update_pk_handler,
 };
 use axum::{
     Router,
     response::{Html, IntoResponse},
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
 };
 use config::Config;
 use repository::pg::PgPaymentAddressRepository;
+use reqwest::Client;
+use semver::Version;
+use serde::Deserialize;
 use service::LnaddrService;
 use service::direct::DirectLnaddrService;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tower_http::services::ServeDir;
 use tracing::{debug, info};
-use reqwest::Client;
-use semver::Version;
-use serde::Deserialize;
 
 pub mod api;
 pub mod config;
@@ -45,6 +46,10 @@ pub async fn serve(config: &Config) -> Result<()> {
 
     let app = Router::new()
         .route("/domains", get(list_domains_handler))
+        .route("/lnaddress/reverse-lookup", get(reverse_lookup_handler))
+        .route("/lnaddress/challenge", get(challenge_handler))
+        .route("/lnaddress/reclaim", post(reclaim_lnaddr_handler))
+        .route("/lnaddress/update-pk", patch(update_pk_handler))
         .route("/lnaddress/:domain/:username", get(get_lnaddr_handler))
         .route("/lnaddress/register", post(register_lnaddr_handler))
         .route("/lnaddress/remove", delete(remove_lnaddr_handler))
@@ -97,8 +102,10 @@ async fn fetch_latest_apk_url() -> Result<String> {
         .collect::<Vec<_>>();
 
     releases.sort_by(|a, b| {
-        let va = Version::parse(a.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0,0,0));
-        let vb = Version::parse(b.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0,0,0));
+        let va =
+            Version::parse(a.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0, 0, 0));
+        let vb =
+            Version::parse(b.tag_name.trim_start_matches('v')).unwrap_or(Version::new(0, 0, 0));
         vb.cmp(&va) // descending order
     });
 
